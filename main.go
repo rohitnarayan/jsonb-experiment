@@ -70,6 +70,7 @@ func main() {
 				LastOrderTimestamp: time.Now(),
 			},
 		},
+		Locale: "en_US",
 	}
 
 	metadataJSON, err := json.Marshal(metadata)
