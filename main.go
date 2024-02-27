@@ -2,12 +2,15 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
 	"time"
 
+	"database/sql/driver"
 	"github.com/jmoiron/sqlx"
+
 	_ "github.com/lib/pq"
 )
 
@@ -35,11 +38,25 @@ type Metadata struct {
 }
 
 type User struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	Phone    string `json:"phone"`
-	Email    string `json:"email"`
-	Metadata string `json:"metadata"`
+	ID       int      `json:"id" db:"id"`
+	Name     string   `json:"name" db:"name"`
+	Phone    string   `json:"phone" db:"phone"`
+	Email    string   `json:"email" db:"email"`
+	Metadata Metadata `json:"metadata" db:"metadata"`
+}
+
+// Value method for MetadataJSON
+func (m *Metadata) Value() (driver.Value, error) {
+	return json.Marshal(m)
+}
+
+// Scan method for MetadataJSON
+func (m *Metadata) Scan(src interface{}) error {
+	b, ok := src.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+	return json.Unmarshal(b, &m)
 }
 
 func main() {
@@ -85,26 +102,20 @@ func main() {
 		Name:     "RJ",
 		Phone:    "+911234567890",
 		Email:    "rj@gmail.com",
-		Metadata: string(metadataJSON),
+		Metadata: metadata,
 	}
 
-	_, err = db.Exec("INSERT INTO jsonb_experiment (id, name, phone, email, metadata) VALUES ($1, $2, $3, $4, $5)", userToInsert.ID, userToInsert.Name, userToInsert.Phone, userToInsert.Email, userToInsert.Metadata)
+	_, err = db.Exec("INSERT INTO jsonb_experiment (id, name, phone, email, metadata) VALUES ($1, $2, $3, $4, $5)",
+		userToInsert.ID, userToInsert.Name, userToInsert.Phone, userToInsert.Email, metadataJSON)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Example of reading data from the database.
 	var retrievedUser User
-
 	if err := db.Get(&retrievedUser, "SELECT id, name, phone, email, metadata FROM jsonb_experiment WHERE id=$1", id); err != nil {
 		log.Fatal(err)
 	}
 
-	var jsonMeta Metadata
-	if err := json.Unmarshal([]byte(retrievedUser.Metadata), &jsonMeta); err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("Retrieved User: %+v\n\n", retrievedUser)
-	fmt.Printf("User metadata: %+v\n\n", jsonMeta)
+	fmt.Printf("Retrieved User: %+v\n", retrievedUser)
 }
