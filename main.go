@@ -62,20 +62,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	/**
-	  Orders: Orders{
-	  		Food: Order{
-	  			Total:              50,
-	  			LastOrderTimestamp: time.Now(),
-	  		},
-	  		Transport: Order{
-	  			Total:              30,
-	  			LastOrderTimestamp: time.Now(),
-	  		},
-	  	},
-	  	Locale: "en_US",
-	*/
-
 	metadata := map[string]interface{}{
 		"orders": map[string]interface{}{
 			"food": map[string]interface{}{
