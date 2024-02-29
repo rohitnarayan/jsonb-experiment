@@ -1,15 +1,14 @@
 package main
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	"log"
 	"math/rand"
 	"time"
-
-	"database/sql/driver"
-	"github.com/jmoiron/sqlx"
 
 	_ "github.com/lib/pq"
 )
@@ -22,20 +21,7 @@ const (
 	dbname   = "postgres"
 )
 
-type Order struct {
-	Total              int       `json:"total"`
-	LastOrderTimestamp time.Time `json:"lastOrderTimestamp"`
-}
-
-type Orders struct {
-	Food      Order `json:"food,omitempty"`
-	Transport Order `json:"transport,omitempty"`
-}
-
-type Metadata struct {
-	Orders Orders `json:"orders,omitempty"`
-	Locale string `json:"locale,omitempty"`
-}
+type Metadata map[string]interface{}
 
 type User struct {
 	ID       int      `json:"id" db:"id"`
@@ -76,18 +62,32 @@ func main() {
 		log.Fatal(err)
 	}
 
-	metadata := Metadata{
-		Orders: Orders{
-			Food: Order{
-				Total:              50,
-				LastOrderTimestamp: time.Now(),
+	/**
+	  Orders: Orders{
+	  		Food: Order{
+	  			Total:              50,
+	  			LastOrderTimestamp: time.Now(),
+	  		},
+	  		Transport: Order{
+	  			Total:              30,
+	  			LastOrderTimestamp: time.Now(),
+	  		},
+	  	},
+	  	Locale: "en_US",
+	*/
+
+	metadata := map[string]interface{}{
+		"orders": map[string]interface{}{
+			"food": map[string]interface{}{
+				"total":              50,
+				"lastOrderTimestamp": time.Now().UTC(),
 			},
-			Transport: Order{
-				Total:              30,
-				LastOrderTimestamp: time.Now(),
+			"transport": map[string]interface{}{
+				"total":              150,
+				"lastOrderTimestamp": time.Now().UTC(),
 			},
 		},
-		Locale: "en_US",
+		"locale": "en_ID",
 	}
 
 	metadataJSON, err := json.Marshal(metadata)
